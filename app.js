@@ -12,6 +12,7 @@ mongoose.connect(dbURI)
 .then((result)=>app.listen(3000))
 .catch((err) => console.log(err));
 
+app.use(express.urlencoded({extended:true}));
 // view engine
 app.set('view engine' , 'ejs');
 
@@ -19,49 +20,53 @@ app.set('view engine' , 'ejs');
 // Middleware for static files
 app.use(express.static('public'));
 
-// add blog
-app.get('/add-blog', (req,res)=>{
-    const blog = new Blog({
-        title:'Blog title 2',
-        sinppet: 'Blog snippet will be here',
-        body: 'blog full body text will be here'
-    });
+// routing
+app.get('/',(req,res)=>{
+    res.redirect('/blogs');
+});
+app.get('/about',(req,res)=>{
+    res.render('about');
+});
 
-    blog.save()
+
+// blogs routes
+app.get('/blogs',(req,res)=>{
+    Blog.find()
     .then((result)=>{
-        res.send(result);
+        res.render('index',{blogs:result});
     })
     .catch((err)=>{
         console.log(err);
     })
 });
 
-// get blogs
-app.get('/all-blogs',(req,res)=>{
-    Blog.find()
-    .then((result)=>{
-        res.send(result);
-    })
-    .catch((err)=>console.log(err));
-});
-
-// routing
-app.get('/',(req,res)=>{
-    const blogs = [
-        {title: 'Blog Title', snippet: 'The main goal to understand working here.'},
-        {title: 'Blog Title', snippet: 'The main goal to understand working here.'},
-        {title: 'Blog Title', snippet: 'The main goal to understand working here.'},
-    ]
-    res.render('index',{blogs});
-});
-app.get('/about',(req,res)=>{
-    res.render('about');
-});
-
 // Redirect
 app.get('/blog/create',(req,res)=>{
     res.render('create');
 });
+// post the blog
+app.post('/posts',(req,res)=>{
+    const blog = new Blog(req.body);
+    blog.save()
+    .then((result)=>{
+        res.redirect('/blogs');
+    })
+    .catch((err)=>{
+        console.log(err);
+    })
+});
+
+// Single blog
+app.get('/blogs/:id',(req,res)=>{
+    Blog.findById(req.params.id)
+    .then((result)=>{
+        res.render('details',{blog: result});
+    })
+    .catch((err)=>{
+        console.log(error);
+    })
+});
+
 
 // 404 error
 app.use((req,res)=>{
